@@ -1,8 +1,9 @@
 import { userModel } from "../../DB/user model/user.model.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
+import { promisify } from 'util';
 import { emailConfirmed } from "../services/confirmEmail.js";
-import { catchError } from "../middelware/ErrorHandeling.js";
+import catchError  from "../middelware/ErrorHandeling.js";
 import AppError from "../utilities/app.err.js";
 
 export const getAllUser = catchError(async (req, res, next) => {
@@ -75,28 +76,30 @@ export const signIn = catchError(async (req, res, next) => {
     res.status(201).json({ message: "SignIn Successfully", token })
 })
 
+const verifyToken = promisify(jwt.verify);
 
-export const verify = catchError((req, res, next) => {
+export const verify = catchError(async (req, res, next) => {
+    try {
+        // Verify the token using promisify
+        const decoded = await verifyToken(req.params.token, "EmailVery");
+        
+        // Find and update the user
+        const userVerify = await userModel.findOneAndUpdate(
+            { email: decoded }, // Adjust according to your decoded payload structure
+            { isConfirmed: true },
+            { new: true }
+        );
 
-    jwt.verify(req.params.token, "EmailVery", async (err, decoded) => {
-
-        if (err) next(new AppError("Invalid Token", 400))
-
-        console.log(decoded,"decoded");
-
-        const userVerify = await userModel.findOneAndUpdate({ email: decoded }, { isConfirmed: true }, { new: true })
-        console.log(userVerify);
         if (userVerify) {
-            res.status(201).json({ message: "User Confirmed", userVerify })
+            res.status(201).json({ message: "User Confirmed", userVerify });
+        } else {
+            next(new AppError("User not found", 404));
         }
-        else {
-            next(new AppError("user not found", 404))
-        }
-    })
-
-}
-)
-
+    } catch (err) {
+        // Handle token verification errors and other errors
+        next(new AppError(err.message || "Internal Server Error", 400));
+    }
+});
 
 export const updateUser = catchError(async (req, res, next) => {
     const { email } = req.body.email

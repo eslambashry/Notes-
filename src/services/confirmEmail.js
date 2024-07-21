@@ -16,7 +16,7 @@ export  async function emailConfirmed(email) {
     // async..await is not allowed in global scope, must use a wrapper
       // send mail with defined transport object
       let token = jwt.sign(email,"EmailVery")
-      console.log(email);
+      // console.log(email);
       const info = await transporter.sendMail({
         from: '"El3aw 👻" <eslamhussin600@gmail.com>', // sender address
         to: email, // list of receivers

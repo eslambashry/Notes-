@@ -1,5 +1,5 @@
 import { noteModel } from "../../DB/note model/note.model.js";
-import { catchError } from "../middelware/ErrorHandeling.js";
+import catchError  from "../middelware/ErrorHandeling.js";
 import AppError from "../utilities/app.err.js";
 
 
